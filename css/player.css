@@ -1,0 +1,292 @@
+/* ========= 底部播放器（全屏布局的底栏） ========= */
+.player {
+  flex: none;
+  z-index: 20;
+  background: rgba(8, 10, 24, 0.88);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* 音乐会整体时间轴行：标签 + 填色进度条 + 全场时钟 */
+.concert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 20px 8px;
+}
+.concert-label {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+.concert-total {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.concert-total::before { content: ""; }
+.concert-total b { color: var(--gold); font-weight: 700; }
+
+/* 音乐会整体时间轴条（曲目分段 + 中场休息） */
+.concert-timeline {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 6px;
+}
+/* 曲目段：统一底色，仅当前段高亮（弱化视觉噪音） */
+.tl-seg {
+  position: relative;
+  border-radius: 4px;
+  background: rgba(139, 123, 255, 0.16);
+  border: 1px solid rgba(139, 123, 255, 0.22);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.tl-seg:hover,
+.tl-seg.active { background: rgba(139, 123, 255, 0.45); border-color: var(--purple-soft); }
+.tl-seg.active { box-shadow: 0 0 10px rgba(139, 123, 255, 0.4); }
+/* 中场休息段：琥珀色区分 */
+.tl-seg.tl-inter {
+  background: rgba(245, 200, 107, 0.2);
+  border-color: rgba(245, 200, 107, 0.4);
+}
+.tl-seg.tl-inter:hover,
+.tl-seg.tl-inter.active { background: rgba(245, 200, 107, 0.55); border-color: var(--gold); }
+/* 填色进度层：覆盖全条（含中场），宽度即全场累计进度，金色渐变 */
+.tl-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(139, 123, 255, 0.85), rgba(245, 200, 107, 0.95));
+  box-shadow: 0 0 8px rgba(245, 200, 107, 0.6);
+  pointer-events: none;
+  z-index: 2;
+  transition: width 0.15s linear;
+}
+
+.player-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+/* 左：曲目信息 */
+.player-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+/* 唱片 = 黑胶底纹 + 中心方形专辑封面 + 序号回退 */
+.player-disc {
+  position: relative;
+  width: 56px; height: 56px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #0a0a0e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+/* 黑胶纹理层：同心纹 + 高光边缘 + 旋转 */
+.player-disc-vinyl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    /* 高光圈：模拟黑胶反光 */
+    radial-gradient(circle at 50% 50%, transparent 22.5%, rgba(255, 255, 255, 0.07) 23%, transparent 23.6%),
+    /* 极细同心纹路 */
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px),
+    /* 黑胶主体：近黑 + 中心略浅的同心 */
+    radial-gradient(circle at 50% 50%, #14141c 0%, #0a0a10 55%, #050508 100%);
+}
+/* 中心圆形专辑封面蒙版（来自网易云音乐，方图圆切） */
+.player-disc-cover {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 28px; height: 28px;
+  transform: translate(-50%, -50%);
+  background: var(--bg-2) center/cover no-repeat;
+  /* 圆形蒙版：方图圆切 */
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px #0a0a0e,
+    0 0 6px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+/* 序号（封面缺失时回退显示） */
+.player-disc-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+  z-index: 3;
+  pointer-events: none;
+  display: none;
+}
+.player-disc.has-cover .player-disc-label { display: none; }
+.player-disc:not(.has-cover) .player-disc-cover { display: none; }
+.player-disc:not(.has-cover) .player-disc-label { display: block; }
+
+.player.disc-spin .player-disc { animation: discSpin 6s linear infinite; }
+@keyframes discSpin { to { transform: rotate(360deg); } }
+
+.player-meta { min-width: 0; }
+.player-title {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-sub.warn { color: var(--gold); }
+
+/* 中：控制 + 进度条 */
+.player-center { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+.player-controls { display: flex; align-items: center; gap: 6px; }
+
+.p-btn {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  font-size: 15px;
+  transition: all 0.2s;
+}
+.p-btn:hover { color: var(--text); background: rgba(139, 123, 255, 0.12); }
+
+.p-btn.main {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  color: #1a1405;
+  background: linear-gradient(160deg, var(--gold), var(--gold-deep));
+  font-size: 17px;
+  box-shadow: 0 4px 18px rgba(245, 200, 107, 0.35);
+}
+.p-btn.main:hover { transform: scale(1.06); box-shadow: 0 6px 24px rgba(245, 200, 107, 0.5); }
+.p-btn.mode.on { color: var(--gold); }
+
+/* 进度条 */
+.player-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(46vw, 420px);
+}
+.p-time { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; width: 36px; }
+.p-time:last-child { text-align: left; }
+
+.progress-bar {
+  position: relative;
+  flex: 1;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none; /* 移动端拖动 */
+}
+.progress-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(139, 123, 255, 0.18);
+  overflow: visible;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--blue-2), var(--purple), var(--gold));
+  position: relative;
+}
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--gold);
+  transform: translate(-50%, -50%) scale(0.9);
+  transition: transform 0.15s;
+  box-shadow: 0 0 8px rgba(245, 200, 107, 0.7);
+}
+.progress-bar:hover .progress-thumb,
+.progress-bar.dragging .progress-thumb { transform: translate(-50%, -50%) scale(1); }
+
+/* 右：音量 + 模式 */
+.player-right { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.player-volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+input[type="range"]#volume {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 90px;
+  height: 4px;
+  border-radius: 2px;
+  background:
+    linear-gradient(90deg, var(--purple) var(--vol, 80%), rgba(139, 123, 255, 0.18) var(--vol, 80%));
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]#volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--purple);
+}
+input[type="range"]#volume::-moz-range-thumb {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--purple);
+}
+
+/* ========= 移动端：压缩成小条 ========= */
+@media (max-width: 760px) {
+  .player-inner {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "info controls" "progress progress";
+    padding: 8px 14px;
+    gap: 8px;
+  }
+  .player-info { grid-area: info; }
+  .player-right { grid-area: controls; }
+  .player-volume { display: none; }
+  .player-center {
+    grid-area: progress;
+    flex-direction: row;
+    width: 100%;
+    gap: 8px;
+  }
+  .player-controls { order: 2; }
+  .player-progress { width: auto; flex: 1; order: 1; }
+  .p-time { display: none; }
+  .player-disc { width: 44px; height: 44px; }
+  .player-disc-cover { width: 22px; height: 22px; }
+}

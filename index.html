@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STELLARIS 十周年纪念音乐会 · 群星</title>
+  <meta name="description" content="群星 Stellaris 十周年纪念音乐会 —— 90 分钟 · 四幕叙事 · 11 首精选 · 20 分钟中场，深空科幻交响音乐厅" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/stage.css" />
+  <link rel="stylesheet" href="css/program.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+<body>
+
+  <!-- 全屏背景星空 -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- ============ 播放器式主界面（全屏，无滚动） ============ -->
+  <div class="app">
+
+    <!-- 顶部：品牌 + 当前幕指示 + 节目单入口 -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">STELLARIS · 我的十周年音乐会</div>
+        <div class="act-badge" id="act-sub">
+          <i class="act-dot" id="act-dot"></i>
+          <span class="act-text">第一幕「启程 · 深空探索」</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-program" id="btn-program">
+          <span class="btn-program-ico">☰</span> 节目单
+        </button>
+      </div>
+    </header>
+
+    <!-- 中央：像素交响舞台（视觉主体） -->
+    <main class="stage-zone">
+      <canvas id="stage" width="960" height="540" aria-label="像素风交响乐团舞台"></canvas>
+
+      <!-- 中场休息浮层 -->
+      <div class="intermission-overlay" id="intermission-overlay" hidden>
+        <div class="intermission-overlay-card">
+          <div class="io-title">中场休息 · INTERMISSION</div>
+          <div class="io-time" id="intermission-remain">20:00</div>
+          <button class="io-skip" id="intermission-skip">立即开始下半场</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部：播放器 -->
+    <footer class="player" id="player">
+      <audio id="audio" preload="metadata"></audio>
+
+      <!-- 音乐会整体时间轴（含中场），填色进度 + 真实曲目时长 -->
+      <div class="concert-row">
+        <span class="concert-label">全场</span>
+        <div class="concert-timeline" id="concert-timeline" title="音乐会整体进度"></div>
+        <span class="concert-total" id="concert-total">0:00 / 1:29:36</span>
+      </div>
+
+      <div class="player-inner">
+        <div class="player-info">
+          <div class="player-disc" id="player-disc" title="当前曲目封面">
+            <div class="player-disc-vinyl" aria-hidden="true"></div>
+            <div class="player-disc-cover" id="player-disc-cover"></div>
+            <div class="player-disc-label" id="player-disc-label">01</div>
+          </div>
+          <div class="player-meta">
+            <div class="player-title" id="player-title">—</div>
+            <div class="player-sub" id="player-sub">准备就绪 · 点右上「节目单」选曲</div>
+          </div>
+        </div>
+
+        <div class="player-center">
+          <div class="player-controls">
+            <button class="p-btn" id="btn-prev" title="上一首">⏮</button>
+            <button class="p-btn main" id="btn-play" title="播放 / 暂停">▶</button>
+            <button class="p-btn" id="btn-next" title="下一首">⏭</button>
+          </div>
+          <div class="player-progress">
+            <span class="p-time" id="time-cur">0:00</span>
+            <div class="progress-bar" id="progress-bar">
+              <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <div class="progress-thumb" id="progress-thumb"></div>
+            </div>
+            <span class="p-time" id="time-total">0:00</span>
+          </div>
+        </div>
+
+        <div class="player-right">
+          <div class="player-volume">
+            <span id="vol-icon">🔊</span>
+            <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8" title="音量" />
+          </div>
+          <button class="p-btn mode" id="btn-mode" title="列表循环"><span>列表循环</span></button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============ 节目单侧栏抽屉 ============ -->
+  <div class="drawer-mask" id="drawer-mask"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <h2 class="drawer-title">四幕节目单</h2>
+        <p class="drawer-sub">90分钟 · 11 首精选 · 含20分钟中场 · 点击即播</p>
+      </div>
+      <button class="btn-close" id="btn-close" title="关闭">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

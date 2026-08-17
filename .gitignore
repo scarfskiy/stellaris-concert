@@ -1,0 +1,32 @@
+# ---------- 运行时 / 第三方依赖 ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# ---------- 本地调试 / 浏览器自动化产物 ----------
+.playwright-mcp/
+.playwright/
+*.log
+*.tmp
+.cache/
+
+# ---------- 大体积二进制（不启用 LFS，直接不入库） ----------
+# Stellaris OST 受版权保护，本地保留不入版本库
+audio/
+# 封面图与构建产物若需共享，改为 LFS 或在 README 中说明外部来源
+assets/cover/
+
+# ---------- 编辑器 / IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- 操作系统 ----------
+Thumbs.db
+.DS_Store
+desktop.ini

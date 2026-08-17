@@ -1,0 +1,85 @@
+/* ========= 中央像素交响舞台（全屏视觉主体） ========= */
+.stage-zone {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* 舞台画布：保持 960x540 逻辑分辨率，等比 contain 居中 */
+#stage {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  image-rendering: pixelated;         /* 保持像素锐利 */
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #03030a;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 24px 80px rgba(20, 16, 60, 0.6),
+    inset 0 0 80px rgba(10, 8, 40, 0.6);
+}
+
+/* 当前幕标签（舞台左上角，随幕变色）—— 由 main.js 更新 */
+#stage-act-label { display: none; }
+
+/* ========= 中场休息浮层（覆盖在舞台上，暖光） ========= */
+.intermission-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(600px 340px at 50% 42%, rgba(255, 162, 96, 0.15), transparent 70%),
+    rgba(3, 4, 12, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: ioFade 0.5s ease;
+}
+.intermission-overlay[hidden] { display: none; }
+@keyframes ioFade { from { opacity: 0; } to { opacity: 1; } }
+
+.intermission-overlay-card {
+  text-align: center;
+  padding: 34px 60px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 162, 96, 0.4);
+  background: rgba(10, 10, 22, 0.86);
+  box-shadow: 0 0 60px rgba(255, 162, 96, 0.18);
+}
+.io-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+.io-time {
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  margin: 12px 0 18px;
+  background: linear-gradient(180deg, #fff, var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(245, 200, 107, 0.25);
+}
+.io-skip {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1405;
+  background: linear-gradient(160deg, var(--gold), var(--gold-deep));
+  padding: 10px 22px;
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(245, 200, 107, 0.35);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.io-skip:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 200, 107, 0.5); }
