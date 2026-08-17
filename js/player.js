@@ -34,6 +34,10 @@ export class Player {
     this._queue = [];       // 当前曲目的候选音频源（本地 -> 远程 url）
     this._sourceKind = 'local'; // 'local' 本地文件 / 'remote' 在线直链
 
+    // 预加载下一首：用隐藏 <audio> 提前缓冲，切歌时无缝衔接
+    this._preloadEl = null;
+    this._preloadedIndex = -1;
+
     this.$ = (id) => document.getElementById(id);
     this.dom = {
       playBtn: this.$('btn-play'),
@@ -142,6 +146,25 @@ export class Player {
   setVolume(v) {
     this.el.volume = v;
     this.dom.volume.style.setProperty('--vol', `${v * 100}%`);
+  }
+
+  /** 预加载下一首曲目到隐藏 <audio> 元素 */
+  _preloadNext() {
+    const nextIdx = this.current + 1;
+    if (nextIdx >= TRACKS.length) return;
+    if (this._preloadedIndex === nextIdx) return;
+
+    const track = TRACKS[nextIdx];
+    if (!track.file) return;
+
+    if (!this._preloadEl) {
+      this._preloadEl = new Audio();
+      this._preloadEl.preload = 'auto';
+      this._preloadEl.muted = true;
+    }
+    this._preloadEl.src = AUDIO_DIR + track.file;
+    this._preloadEl.load();
+    this._preloadedIndex = nextIdx;
   }
 
   /* ---------------- 中场休息状态机 ---------------- */
@@ -260,6 +283,7 @@ export class Player {
 
     this._loadNext();
     this.cb.onTrackChange?.(index);
+    this._preloadNext();
   }
 
   /** 尝试队列里的下一个音频源 */

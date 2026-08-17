@@ -6,6 +6,8 @@
   <title>STELLARIS 十周年纪念音乐会 · 群星</title>
   <meta name="description" content="群星 Stellaris 十周年纪念音乐会 —— 90 分钟 · 四幕叙事 · 11 首精选 · 20 分钟中场，深空科幻交响音乐厅" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <link rel="preload" href="audio/01.mp3" as="audio" type="audio/mpeg" />
+  <link rel="preload" href="assets/cover/stellaris-ost.jpg" as="image" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/stage.css" />
   <link rel="stylesheet" href="css/program.css" />
@@ -115,6 +117,11 @@
     <div class="drawer-body" id="drawer-body"></div>
   </aside>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
