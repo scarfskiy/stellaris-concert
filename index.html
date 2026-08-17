@@ -18,6 +18,16 @@
   <!-- 全屏背景星空 -->
   <canvas id="starfield" aria-hidden="true"></canvas>
 
+  <!-- 启动加载页：首曲可播即隐藏；期间后台预下载音频 -->
+  <div class="boot" id="boot" aria-hidden="false">
+    <div class="boot-inner">
+      <div class="boot-ring"><i></i></div>
+      <div class="boot-title">STELLARIS 十周年纪念音乐会</div>
+      <div class="boot-sub" id="boot-sub">正在建立深空链接…</div>
+      <div class="boot-bar"><div class="boot-fill" id="boot-fill"></div></div>
+    </div>
+  </div>
+
   <!-- ============ 播放器式主界面（全屏，无滚动） ============ -->
   <div class="app">
 

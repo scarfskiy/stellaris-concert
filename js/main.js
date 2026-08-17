@@ -4,7 +4,7 @@
  * 统一 rAF 循环。顶部仅保留单一「当前幕」指示，避免重复元素。
  */
 
-import { ACTS, TRACKS, INTERMISSION_SECONDS } from './config.js';
+import { ACTS, TRACKS, INTERMISSION_SECONDS, AUDIO_DIR } from './config.js';
 import { buildBounds, totalSeconds, LAST_UPPER_INDEX, locate, setTrackDurations } from './timeline.js';
 import { Starfield } from './starfield.js';
 import { Stage } from './stage.js';
@@ -77,6 +77,10 @@ function buildTimeline() {
     seg.style.flexGrow = String(b[i].dur); // 曲段按真实时长比例
     seg.title = `${i + 1}. ${TRACKS[i].title} · ${TRACKS[i].duration}${TRACKS[i].encore ? ' ★' : ''}`;
     seg.addEventListener('click', () => player.playTrack(i));
+    // 缓存/缓冲进度覆盖层
+    const cacheEl = document.createElement('i');
+    cacheEl.className = 'tl-cache';
+    seg.appendChild(cacheEl);
     segEls[i] = seg;
     frag.appendChild(seg);
   }
@@ -180,8 +184,92 @@ setActUI(0);
 // 曲目真实时长一旦可得，重排全局时间轴曲段
 audioEl.addEventListener('durationchange', () => recordDuration(player.current, audioEl.duration));
 
+/* ---------- 启动加载页 + Service Worker 通信 ---------- */
+const boot = document.getElementById('boot');
+const bootFill = document.getElementById('boot-fill');
+const bootSub = document.getElementById('boot-sub');
+let swReg = null;
+
+function swPost(msg) {
+  if (swReg && swReg.active) swReg.active.postMessage(msg);
+}
+window.__swPost = swPost; // 供 player.js 请求预取
+
+function prefetchUrls(fromIndex) {
+  const list = [];
+  for (const t of [TRACKS[fromIndex], TRACKS[fromIndex + 1]]) {
+    if (t && t.file) list.push(AUDIO_DIR + t.file);
+  }
+  return list;
+}
+
+function indexOfAudioUrl(url) {
+  const i = url.indexOf(AUDIO_DIR);
+  if (i < 0) return -1;
+  const rel = url.slice(i + AUDIO_DIR.length);
+  return TRACKS.findIndex((t) => t.file === rel);
+}
+
+function markCached(index) {
+  const seg = segEls[index];
+  if (!seg) return;
+  seg.classList.add('cached');
+  const cacheEl = seg.querySelector('.tl-cache');
+  if (cacheEl) cacheEl.style.width = '100%';
+}
+
+function onPrefetchProgress(m) {
+  const i = indexOfAudioUrl(m.url);
+  if (i < 0) return;
+  if (m.done) {
+    markCached(i);
+    if (i === 0) {
+      bootSub.textContent = '首曲已缓存 · 正在预热舞台…';
+      bootFill.style.width = '100%';
+    }
+    return;
+  }
+  if (i === 0) {
+    const pct = m.total ? Math.min(100, Math.round((m.received / m.total) * 100)) : 0;
+    bootFill.style.width = `${pct}%`;
+    bootSub.textContent = `正在缓存 ${String(i + 1).padStart(2, '0')} ${TRACKS[i].title} · ${pct}%`;
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then((reg) => {
+      swReg = reg;
+      if (reg.active) swPost({ type: 'prefetch', urls: prefetchUrls(0) });
+      else reg.addEventListener('statechange', () => { if (reg.active) swPost({ type: 'prefetch', urls: prefetchUrls(0) }); });
+    })
+    .catch(() => {});
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    const m = e.data;
+    if (!m) return;
+    if (m.type === 'prefetch-progress') onPrefetchProgress(m);
+    else if (m.type === 'cache-status') {
+      for (const [url, ok] of Object.entries(m.results || {})) {
+        const i = indexOfAudioUrl(url);
+        if (i >= 0 && ok) markCached(i);
+      }
+    }
+  });
+}
+
+/* 首曲可播即进入主界面；超时兜底 + 加载失败也放行 */
+function hideBoot() {
+  if (boot.classList.contains('done')) return;
+  boot.classList.add('done');
+  setTimeout(() => boot.remove?.(), 600);
+}
+audioEl.addEventListener('canplay', hideBoot);
+audioEl.addEventListener('error', hideBoot);
+setTimeout(hideBoot, 15000);
+
 /* ---------- 统一动画循环 ---------- */
 let lastT = performance.now();
+let lastCacheCheck = 0;
 function loop(t) {
   const dt = Math.min(64, t - lastT);
   lastT = t;
@@ -190,6 +278,24 @@ function loop(t) {
   player.tick(dt);
   starfield.frame(t, dt);
   stage.frame(t, dt);
+
+  // 当前曲目缓冲进度 -> 时间轴曲段覆盖层
+  const ci = player.current;
+  if (ci >= 0 && !segEls[ci].classList.contains('cached')) {
+    const el = audioEl;
+    if (isFinite(el.duration) && el.duration > 0 && el.buffered.length) {
+      const end = el.buffered.end(el.buffered.length - 1);
+      const cacheEl = segEls[ci].querySelector('.tl-cache');
+      if (cacheEl) cacheEl.style.width = `${Math.min(100, (end / el.duration) * 100)}%`;
+    }
+  }
+  // 每 10 秒扫描一次已完整缓存的曲目（SW 缓存状态回填）
+  if (t - lastCacheCheck > 10000) {
+    lastCacheCheck = t;
+    if (swReg && swReg.active) {
+      swPost({ type: 'cache-status', urls: TRACKS.map((tr) => AUDIO_DIR + tr.file) });
+    }
+  }
 
   if (player.state === 'intermission') {
     const sec = Math.max(0, Math.ceil(player._restRemain));

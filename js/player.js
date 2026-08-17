@@ -159,7 +159,7 @@ export class Player {
 
     if (!this._preloadEl) {
       this._preloadEl = new Audio();
-      this._preloadEl.preload = 'auto';
+      this._preloadEl.preload = 'metadata'; // 仅取元数据（完整缓存交给 SW 预取）
       this._preloadEl.muted = true;
     }
     this._preloadEl.src = AUDIO_DIR + track.file;
@@ -284,6 +284,14 @@ export class Player {
     this._loadNext();
     this.cb.onTrackChange?.(index);
     this._preloadNext();
+    // 通知 Service Worker 后台预取当前曲 + 下一首（边听边下，保音质）
+    window.__swPost?.({
+      type: 'prefetch',
+      urls: [TRACKS[index], TRACKS[index + 1]]
+        .filter(Boolean)
+        .filter((t) => t.file)
+        .map((t) => AUDIO_DIR + t.file),
+    });
   }
 
   /** 尝试队列里的下一个音频源 */

@@ -134,3 +134,89 @@ button {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2b3260; border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #3d4685; }
+
+/* ========= 启动加载页 ========= */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(900px 600px at 50% 20%, rgba(60, 45, 140, 0.35), transparent 60%),
+    linear-gradient(180deg, #05060f 0%, #0a0d1f 60%, #05060f 100%);
+  transition: opacity 0.5s ease;
+}
+.boot.done { opacity: 0; pointer-events: none; }
+.boot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 40px 56px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(10, 13, 31, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 60px rgba(139, 123, 255, 0.15);
+}
+.boot-ring {
+  position: relative;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 4px), radial-gradient(circle, #14141c 0%, #0a0a10 60%, #050508 100%);
+}
+.boot-ring::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--purple);
+  border-right-color: var(--gold);
+  animation: bootSpin 1.1s linear infinite;
+}
+.boot-ring i {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 26px; height: 26px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #8b7bff 0%, #2b3a8c 70%);
+  box-shadow: 0 0 14px rgba(139, 123, 255, 0.8);
+}
+@keyframes bootSpin { to { transform: rotate(360deg); } }
+.boot-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, #fff, var(--purple-soft));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+.boot-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+.boot-bar {
+  width: 260px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(139, 123, 255, 0.18);
+  overflow: hidden;
+}
+.boot-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--blue-2), var(--purple), var(--gold));
+  transition: width 0.3s ease;
+}
+@media (max-width: 760px) {
+  .boot-inner { padding: 28px 30px; }
+  .boot-bar { width: 210px; }
+}

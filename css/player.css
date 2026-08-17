@@ -55,6 +55,21 @@
 .tl-seg:hover,
 .tl-seg.active { background: rgba(139, 123, 255, 0.45); border-color: var(--purple-soft); }
 .tl-seg.active { box-shadow: 0 0 10px rgba(139, 123, 255, 0.4); }
+/* 曲目缓存/缓冲进度覆盖层：蓝=缓冲中，绿=已完整缓存 */
+.tl-cache {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  border-radius: 4px;
+  background: rgba(150, 200, 255, 0.4);
+  pointer-events: none;
+  z-index: 1;
+  transition: width 0.2s linear;
+}
+.tl-seg.cached .tl-cache {
+  width: 100%;
+  background: rgba(110, 220, 160, 0.45);
+}
 /* 中场休息段：琥珀色区分 */
 .tl-seg.tl-inter {
   background: rgba(245, 200, 107, 0.2);
